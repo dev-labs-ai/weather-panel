@@ -1,0 +1,4 @@
+/* source(none) turns off automatic detection, which would also scan the vendored htmx and the docs; classes come
+   only from the templ components. */
+@import "tailwindcss" source(none);
+@source "../../internal/view";

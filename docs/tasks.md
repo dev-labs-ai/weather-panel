@@ -121,7 +121,7 @@ unit or language switch.
 
 ## Phase 4: Web interface
 
-- [ ] **T11: Serve static assets and set up the Tailwind pipeline**
+- [x] **T11: Serve static assets and set up the Tailwind pipeline**
   - Depends on: T03
   - Covers: FR14, AC-04 (same-origin assets)
   - Vendor `htmx.min.js` 4.0.0 into `web/static/js/`, embed `web/static` in `web/embed.go`, and serve it at
