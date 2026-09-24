@@ -13,7 +13,7 @@ unit or language switch.
 
 ## Phase 1: Foundation
 
-- [ ] **T01: Initialize the Go module and project skeleton**
+- [x] **T01: Initialize the Go module and project skeleton**
   - Depends on: none
   - Create `go.mod` with module path `github.com/dev-labs-ai/weather-panel` and `go 1.27`.
   - Add templ and sqlc as `tool` directives at the versions pinned in the techspec.

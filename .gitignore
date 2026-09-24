@@ -1,1 +1,5 @@
 .idea/
+
+# Build output
+/bin/
+/web/static/css/app.css
