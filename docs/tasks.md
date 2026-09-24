@@ -97,7 +97,7 @@ unit or language switch.
     The `app` service comes in T16.
   - Done when: `docker compose up db` reports the database as healthy.
 
-- [ ] **T09: Run migrations at startup and open the connection pool**
+- [x] **T09: Run migrations at startup and open the connection pool**
   - Depends on: T03, T08
   - Add `db/migrations/000001_create_cache_tables.up.sql` and `.down.sql` with the schema from the techspec.
   - Embed them in `db/embed.go` and apply them at startup through golang-migrate (`iofs` source, `pgx5://` URL).

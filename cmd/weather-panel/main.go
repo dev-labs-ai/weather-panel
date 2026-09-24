@@ -15,6 +15,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/dev-labs-ai/weather-panel/db"
 	"github.com/dev-labs-ai/weather-panel/internal/config"
 	"github.com/dev-labs-ai/weather-panel/internal/web"
 )
@@ -37,6 +40,19 @@ func run(ctx context.Context, getenv func(string) string, stdout io.Writer) erro
 		return err
 	}
 	logger := slog.New(slog.NewJSONHandler(stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
+
+	// A schema the service cannot rely on is fatal at startup; after that, the database is only a best-effort cache.
+	version, err := db.Migrate(cfg.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("migrate database: %w", err)
+	}
+	logger.Info("database migrated", slog.Uint64("version", uint64(version)))
+
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("open database pool: %w", err)
+	}
+	defer pool.Close()
 
 	// A request lasts at most the lookup deadline plus rendering, and shutdown waits that long for it to finish.
 	requestTimeout := cfg.LookupTimeout + 5*time.Second

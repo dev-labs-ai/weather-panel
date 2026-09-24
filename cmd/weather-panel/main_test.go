@@ -10,6 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/dev-labs-ai/weather-panel/internal/dbtest"
 )
 
 // syncBuffer lets the test read the service logs while the service is still writing them.
@@ -44,7 +46,7 @@ func TestRunServesUntilCanceled(t *testing.T) {
 	port := strconv.Itoa(freePort(t))
 	env := map[string]string{
 		"PORT":         port,
-		"DATABASE_URL": "postgres://weather:weather@127.0.0.1:1/weather",
+		"DATABASE_URL": dbtest.Fresh(t),
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -81,6 +83,14 @@ func TestRunServesUntilCanceled(t *testing.T) {
 	}
 	if !strings.Contains(logs.String(), `"msg":"stopped"`) {
 		t.Errorf("logs do not record a clean stop:\n%s", logs.String())
+	}
+}
+
+func TestRunFailsWhenMigrationsFail(t *testing.T) {
+	env := map[string]string{"PORT": strconv.Itoa(freePort(t)), "DATABASE_URL": dbtest.UnreachableURL}
+	err := run(context.Background(), func(name string) string { return env[name] }, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "migrate database") {
+		t.Errorf("run() error = %v, want a migration error", err)
 	}
 }
 
