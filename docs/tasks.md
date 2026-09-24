@@ -145,7 +145,7 @@ unit or language switch.
   - Done when: the page renders, handler tests assert the form attributes and the live region, and the input is not
     disabled during a request.
 
-- [ ] **T13: Build the result and state components**
+- [x] **T13: Build the result and state components**
   - Depends on: T05, T12
   - Covers: FR2, FR4, FR5, FR6, FR7, FR8, FR10, FR13, AC-02, AC-03, AC-11, AC-13
   - Build a success component that shows the resolved location and highlights the temperature and condition, followed

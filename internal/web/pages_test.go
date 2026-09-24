@@ -10,10 +10,11 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/dev-labs-ai/weather-panel/internal/htmltest"
 	"github.com/dev-labs-ai/weather-panel/internal/web"
 )
 
-func getIndex(t *testing.T) (*httptest.ResponseRecorder, doc) {
+func getIndex(t *testing.T) (*httptest.ResponseRecorder, htmltest.Doc) {
 	t.Helper()
 	rec := httptest.NewRecorder()
 	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic)
@@ -21,7 +22,7 @@ func getIndex(t *testing.T) (*httptest.ResponseRecorder, doc) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET / status = %d, want %d", rec.Code, http.StatusOK)
 	}
-	return rec, parseHTML(t, rec.Body.String())
+	return rec, htmltest.Parse(t, rec.Body.String())
 }
 
 func TestIndexRendersThePage(t *testing.T) {
@@ -31,16 +32,16 @@ func TestIndexRendersThePage(t *testing.T) {
 	if got := rec.Header().Get("Content-Type"); got != "text/html; charset=utf-8" {
 		t.Errorf("Content-Type = %q, want text/html; charset=utf-8", got)
 	}
-	if got := attr(d.one("html"), "lang"); got != "pt-BR" {
+	if got := htmltest.Attr(d.One("html"), "lang"); got != "pt-BR" {
 		t.Errorf(`<html lang> = %q, want "pt-BR"`, got)
 	}
-	if got := text(d.one("title")); got != "Clima agora" {
+	if got := htmltest.Text(d.One("title")); got != "Clima agora" {
 		t.Errorf("<title> = %q, want %q", got, "Clima agora")
 	}
-	if got := text(d.one("h1")); got != "Clima agora" {
+	if got := htmltest.Text(d.One("h1")); got != "Clima agora" {
 		t.Errorf("<h1> = %q, want %q", got, "Clima agora")
 	}
-	if !within(d.one("h1"), d.one("main")) {
+	if !htmltest.Within(d.One("h1"), d.One("main")) {
 		t.Error("the heading is outside <main>")
 	}
 }
@@ -50,15 +51,15 @@ func TestIndexLoadsSameOriginAssetsOnly(t *testing.T) {
 	_, d := getIndex(t)
 
 	var stylesheets, scripts []string
-	for _, link := range d.tags("link") {
-		if attr(link, "rel") == "stylesheet" {
-			stylesheets = append(stylesheets, attr(link, "href"))
+	for _, link := range d.Tags("link") {
+		if htmltest.Attr(link, "rel") == "stylesheet" {
+			stylesheets = append(stylesheets, htmltest.Attr(link, "href"))
 		}
 	}
-	for _, script := range d.tags("script") {
-		src := attr(script, "src")
+	for _, script := range d.Tags("script") {
+		src := htmltest.Attr(script, "src")
 		if src == "" {
-			t.Errorf("found an inline <script>, which the CSP blocks: %q", text(script))
+			t.Errorf("found an inline <script>, which the CSP blocks: %q", htmltest.Text(script))
 		}
 		scripts = append(scripts, src)
 	}
@@ -68,7 +69,7 @@ func TestIndexLoadsSameOriginAssetsOnly(t *testing.T) {
 	if len(scripts) != 1 || !strings.HasPrefix(scripts[0], "/static/js/htmx.min.js") {
 		t.Errorf("scripts = %q, want only /static/js/htmx.min.js", scripts)
 	}
-	for _, n := range all(d.root, func(n *html.Node) bool { return true }) {
+	for _, n := range htmltest.All(d.Root, func(n *html.Node) bool { return true }) {
 		for _, a := range n.Attr {
 			if (a.Key == "src" || a.Key == "href") && !strings.HasPrefix(a.Val, "/") && a.Val != "data:," {
 				t.Errorf("<%s %s=%q> loads a resource from another origin", n.Data, a.Key, a.Val)
@@ -84,7 +85,7 @@ func TestIndexSearchForm(t *testing.T) {
 	t.Parallel()
 	_, d := getIndex(t)
 
-	form := d.one("form")
+	form := d.One("form")
 	for name, want := range map[string]string{
 		"action":       "/weather",
 		"method":       "get",
@@ -96,45 +97,47 @@ func TestIndexSearchForm(t *testing.T) {
 		"hx-sync":      "this:drop",
 		"hx-indicator": "#loading",
 	} {
-		if got := attr(form, name); got != want {
+		if got := htmltest.Attr(form, name); got != want {
 			t.Errorf("<form %s> = %q, want %q", name, got, want)
 		}
 	}
 
-	label := d.one("label")
-	if attr(label, "for") != "city" || text(label) != "Cidade" {
-		t.Errorf(`<label> = for %q, %q, want a persistent "Cidade" label for the city input`, attr(label, "for"),
-			text(label))
+	label := d.One("label")
+	if htmltest.Attr(label, "for") != "city" || htmltest.Text(label) != "Cidade" {
+		t.Errorf(`<label> = for %q, %q, want a persistent "Cidade" label for the city input`, htmltest.Attr(label, "for"),
+			htmltest.Text(label))
 	}
-	input := d.byID("city")
+	input := d.ByID("city")
 	for name, want := range map[string]string{
 		"name":      "city",
 		"type":      "text",
 		"maxlength": "100",
 		"value":     "",
 	} {
-		if got := attr(input, name); got != want {
+		if got := htmltest.Attr(input, name); got != want {
 			t.Errorf("<input %s> = %q, want %q", name, got, want)
 		}
 	}
-	if got := strings.Fields(attr(input, "aria-describedby")); !slices.Equal(got, []string{"city-hint", "city-error"}) {
+	describedBy := strings.Fields(htmltest.Attr(input, "aria-describedby"))
+	if got := describedBy; !slices.Equal(got, []string{"city-hint", "city-error"}) {
 		t.Errorf("<input aria-describedby> = %q, want the hint and the validation message", got)
 	}
-	if got := text(d.byID("city-hint")); got != "Digite o nome de uma cidade, por exemplo: Recife." {
+	if got := htmltest.Text(d.ByID("city-hint")); got != "Digite o nome de uma cidade, por exemplo: Recife." {
 		t.Errorf("hint = %q", got)
 	}
 	// The server is the single source of validation messages.
 	for _, constraint := range []string{"required", "minlength", "pattern", "disabled"} {
-		if hasAttr(input, constraint) {
+		if htmltest.HasAttr(input, constraint) {
 			t.Errorf("<input> has %q, want no constraint besides maxlength", constraint)
 		}
 	}
 
-	button := d.one("button")
-	if attr(button, "type") != "submit" || text(button) != "Buscar" {
-		t.Errorf("<button> = type %q, %q, want a submit button labeled Buscar", attr(button, "type"), text(button))
+	button := d.One("button")
+	if htmltest.Attr(button, "type") != "submit" || htmltest.Text(button) != "Buscar" {
+		t.Errorf("<button> = type %q, %q, want a submit button labeled Buscar", htmltest.Attr(button, "type"),
+			htmltest.Text(button))
 	}
-	if !within(input, form) || !within(button, form) {
+	if !htmltest.Within(input, form) || !htmltest.Within(button, form) {
 		t.Error("the input and the button must be inside the form")
 	}
 }
@@ -144,15 +147,15 @@ func TestIndexDisablesOnlyTheButtonDuringARequest(t *testing.T) {
 	_, d := getIndex(t)
 
 	// hx-disable="find button" disables the first <button> inside the form; the input must never be the target.
-	form := d.one("form")
-	if got := attr(form, "hx-disable"); got != "find button" {
+	form := d.One("form")
+	if got := htmltest.Attr(form, "hx-disable"); got != "find button" {
 		t.Fatalf(`<form hx-disable> = %q, want "find button"`, got)
 	}
-	buttons := all(form, func(n *html.Node) bool { return n.Data == "button" })
+	buttons := htmltest.All(form, func(n *html.Node) bool { return n.Data == "button" })
 	if len(buttons) != 1 {
 		t.Fatalf("form holds %d buttons, want exactly the submit button", len(buttons))
 	}
-	if d.byID("city").Data != "input" {
+	if d.ByID("city").Data != "input" {
 		t.Error("the city field is not an <input>")
 	}
 }
@@ -161,14 +164,14 @@ func TestIndexLoadingIndicator(t *testing.T) {
 	t.Parallel()
 	_, d := getIndex(t)
 
-	loading := d.byID("loading")
-	if !slices.Contains(strings.Fields(attr(loading, "class")), "htmx-indicator") {
-		t.Errorf(`#loading class = %q, want htmx-indicator`, attr(loading, "class"))
+	loading := d.ByID("loading")
+	if !slices.Contains(strings.Fields(htmltest.Attr(loading, "class")), "htmx-indicator") {
+		t.Errorf(`#loading class = %q, want htmx-indicator`, htmltest.Attr(loading, "class"))
 	}
-	if attr(loading, "role") != "status" {
-		t.Errorf(`#loading role = %q, want "status"`, attr(loading, "role"))
+	if htmltest.Attr(loading, "role") != "status" {
+		t.Errorf(`#loading role = %q, want "status"`, htmltest.Attr(loading, "role"))
 	}
-	if got := text(loading); got != "Buscando o clima…" {
+	if got := htmltest.Text(loading); got != "Buscando o clima…" {
 		t.Errorf("#loading text = %q, want %q", got, "Buscando o clima…")
 	}
 }
@@ -177,21 +180,21 @@ func TestIndexResultRegion(t *testing.T) {
 	t.Parallel()
 	_, d := getIndex(t)
 
-	result := d.byID("result")
-	if attr(result, "aria-live") != "polite" || attr(result, "aria-atomic") != "true" {
-		t.Errorf(`#result aria-live = %q, aria-atomic = %q, want "polite" and "true"`, attr(result, "aria-live"),
-			attr(result, "aria-atomic"))
+	result := d.ByID("result")
+	if htmltest.Attr(result, "aria-live") != "polite" || htmltest.Attr(result, "aria-atomic") != "true" {
+		t.Errorf(`#result aria-live = %q, aria-atomic = %q, want "polite" and "true"`, htmltest.Attr(result, "aria-live"),
+			htmltest.Attr(result, "aria-atomic"))
 	}
-	if within(result, d.one("form")) {
+	if htmltest.Within(result, d.One("form")) {
 		t.Error("#result is inside the form; swapping it would replace the input")
 	}
-	if !within(result, d.one("main")) {
+	if !htmltest.Within(result, d.One("main")) {
 		t.Error("#result is outside <main>")
 	}
-	if got := text(result); got != "" {
+	if got := htmltest.Text(result); got != "" {
 		t.Errorf("#result = %q, want it empty before a search", got)
 	}
-	if d.hasID("city-error") {
+	if d.HasID("city-error") {
 		t.Error("the page shows a validation message before any search")
 	}
 }
