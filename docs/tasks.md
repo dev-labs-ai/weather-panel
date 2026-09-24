@@ -44,7 +44,7 @@ unit or language switch.
 
 ## Phase 2: Domain and Open-Meteo integration
 
-- [ ] **T04: Normalize and validate the city input**
+- [x] **T04: Normalize and validate the city input**
   - Depends on: T01
   - Covers: FR1, FR2, AC-05
   - In `internal/weather`: trim, collapse internal whitespace, normalize to NFC (`golang.org/x/text/unicode/norm`),
