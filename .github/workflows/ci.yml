@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: weather
+          POSTGRES_PASSWORD: weather
+          POSTGRES_DB: weather
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U weather -d weather"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # The integration tests create and drop their own databases on this server.
+      TEST_DATABASE_URL: postgres://weather:weather@localhost:5432/weather?sslmode=disable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Check generated code
+        run: make check-generated
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -race ./...

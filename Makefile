@@ -12,12 +12,22 @@ TAILWIND_PLATFORM := $(TAILWIND_OS)-$(TAILWIND_ARCH)
 TAILWIND := bin/tailwindcss-$(TAILWIND_VERSION)-$(TAILWIND_PLATFORM)
 SHA256SUM := $(if $(shell command -v sha256sum),sha256sum,shasum -a 256)
 
-.PHONY: generate tailwind css build run test
+.PHONY: generate check-generated tailwind css build run test
 
 # Regenerates the committed sqlc and templ code.
 generate:
 	go tool templ generate
 	go tool sqlc generate
+
+# Fails when the committed sqlc or templ code differs from what the pinned generators produce.
+GENERATED := internal/store internal/view
+check-generated: generate
+	@if [ -n "$$(git status --porcelain --untracked-files=all -- $(GENERATED))" ]; then \
+		echo "Generated code is stale; run 'make generate' and commit the result:"; \
+		git status --short --untracked-files=all -- $(GENERATED); \
+		git diff -- $(GENERATED); \
+		exit 1; \
+	fi
 
 # Downloads the Tailwind CLI only; the Dockerfile runs it in its own layer so the download is cached.
 tailwind: $(TAILWIND)

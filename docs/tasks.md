@@ -192,7 +192,7 @@ unit or language switch.
   - Add the `app` service to `compose.yaml`: it starts once `db` is healthy and receives `DATABASE_URL`.
   - Done when: `docker compose up --build` serves the panel on port 8080 and a real lookup works end to end.
 
-- [ ] **T17: Add continuous integration**
+- [x] **T17: Add continuous integration**
   - Depends on: T10, T14
   - Add a GitHub Actions workflow on Go 1.27 that runs `make check-generated`, `go vet ./...`, and `go test ./...`,
     with a PostgreSQL service for the integration tests. Add the `check-generated` target to the `Makefile`.
