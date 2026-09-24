@@ -53,7 +53,7 @@ unit or language switch.
   - Done when: table tests cover empty input, whitespace-only input, a single character, punctuation only, `Ré`,
     `São   Paulo`, decomposed accents that must equal their composed form, and 101 runes.
 
-- [ ] **T05: Map weather codes and format values for display**
+- [x] **T05: Map weather codes and format values for display**
   - Depends on: T01
   - Covers: FR4, FR5, FR6, FR7, FR8, AC-02, AC-03
   - Implement the WMO code table from the techspec, with "Condição não informada" for unknown codes.
