@@ -7,6 +7,8 @@ tool (
 	github.com/sqlc-dev/sqlc/cmd/sqlc
 )
 
+require github.com/go-chi/chi/v5 v5.3.2
+
 require (
 	cel.dev/expr v0.25.1 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect

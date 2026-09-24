@@ -30,7 +30,7 @@ unit or language switch.
   - Done when: unit tests cover defaults, overrides, and startup failure when `DATABASE_URL` is missing or a value is
     malformed.
 
-- [ ] **T03: Build the HTTP server, middleware, and health check**
+- [x] **T03: Build the HTTP server, middleware, and health check**
   - Depends on: T02
   - Covers: FR14, AC-04 (the CSP part)
   - `cmd/weather-panel/main.go` starts a chi router behind an `http.Server` with read-header, read, write, and idle
