@@ -40,13 +40,18 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// newTab starts a headless Chrome with the viewport and returns a context for driving it.
+// newTab starts a headless Chrome with the viewport and returns a context for driving it for up to 90 seconds.
 func newTab(t *testing.T, width, height int) context.Context {
+	t.Helper()
+	return newTabFor(t, width, height, 90*time.Second)
+}
+
+func newTabFor(t *testing.T, width, height int, timeout time.Duration) context.Context {
 	t.Helper()
 	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.WindowSize(width, height))
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
 	ctx, cancelTab := chromedp.NewContext(allocCtx)
-	ctx, cancelTimeout := context.WithTimeout(ctx, 90*time.Second)
+	ctx, cancelTimeout := context.WithTimeout(ctx, timeout)
 	t.Cleanup(func() {
 		cancelTimeout()
 		cancelTab()

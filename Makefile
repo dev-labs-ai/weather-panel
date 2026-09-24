@@ -12,7 +12,7 @@ TAILWIND_PLATFORM := $(TAILWIND_OS)-$(TAILWIND_ARCH)
 TAILWIND := bin/tailwindcss-$(TAILWIND_VERSION)-$(TAILWIND_PLATFORM)
 SHA256SUM := $(if $(shell command -v sha256sum),sha256sum,shasum -a 256)
 
-.PHONY: generate check-generated tailwind css build run test test-browser
+.PHONY: generate check-generated tailwind css build run test test-browser perf
 
 # Regenerates the committed sqlc and templ code.
 generate:
@@ -57,3 +57,8 @@ test:
 # `docker compose up -d --build` starts. Needs a local Chrome or Chromium.
 test-browser:
 	go test -tags browser -count=1 ./test/browser
+
+# Measures AC-09 against the real Open-Meteo through the panel at BROWSER_TEST_URL, starting from an empty cache in
+# PERF_DATABASE_URL. PERF_INTERVAL spaces the lookups; above a minute, every lookup opens new upstream connections.
+perf:
+	go test -tags browser,perf -count=1 -run TestLookupLatency -v -timeout 90m ./test/browser

@@ -220,7 +220,7 @@ unit or language switch.
     prescribes.
   - Done when: every state change is announced with its text, and the result is recorded in the pull request.
 
-- [ ] **T20: Measure end-to-end performance**
+- [x] **T20: Measure end-to-end performance**
   - Depends on: T18
   - Covers: AC-09
   - Measure a representative set of cities (common names, accented names, ambiguous names) against the real

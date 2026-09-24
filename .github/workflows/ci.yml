@@ -36,7 +36,7 @@ jobs:
       - name: Check generated code
         run: make check-generated
       - name: Vet
-        # The browser build tag also compiles the browser tests, which CI does not run.
-        run: go vet -tags browser ./...
+        # The build tags also compile the browser and performance tests, which CI does not run.
+        run: go vet -tags browser,perf ./...
       - name: Test
         run: go test -race ./...
