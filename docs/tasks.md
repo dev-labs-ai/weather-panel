@@ -229,7 +229,7 @@ unit or language switch.
   - Done when: at least 95% of lookups display the result within 3 seconds, and the measurement and its conditions are
     recorded.
 
-- [ ] **T21: Update the README and CLAUDE.md with real commands**
+- [x] **T21: Update the README and CLAUDE.md with real commands**
   - Depends on: T16, T17
   - Replace "Getting started" in `README.md` and "Project status" in `CLAUDE.md` with the actual commands: build, run,
     test, a single test, generate, CSS, and Docker Compose.
