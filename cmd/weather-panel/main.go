@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/dev-labs-ai/weather-panel/db"
+	"github.com/dev-labs-ai/weather-panel/internal/cache"
 	"github.com/dev-labs-ai/weather-panel/internal/config"
 	"github.com/dev-labs-ai/weather-panel/internal/web"
 )
@@ -53,6 +54,7 @@ func run(ctx context.Context, getenv func(string) string, stdout io.Writer) erro
 		return fmt.Errorf("open database pool: %w", err)
 	}
 	defer pool.Close()
+	go cache.New(pool).RunCleanup(ctx, time.Hour, logger)
 
 	// A request lasts at most the lookup deadline plus rendering, and shutdown waits that long for it to finish.
 	requestTimeout := cfg.LookupTimeout + 5*time.Second

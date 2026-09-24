@@ -105,7 +105,7 @@ unit or language switch.
   - Done when: the service applies migrations against a fresh database, starts cleanly when they are already applied,
     and exits with an error when they fail.
 
-- [ ] **T10: Generate queries with sqlc and implement the PostgreSQL cache**
+- [x] **T10: Generate queries with sqlc and implement the PostgreSQL cache**
   - Depends on: T07, T09
   - Covers: AC-09 (latency); supports the PRD's provider-limit and data-retention constraints
   - Add `sqlc.yaml` (PostgreSQL engine, schema from `db/migrations`, queries from `db/queries`, `pgx/v5`, output in

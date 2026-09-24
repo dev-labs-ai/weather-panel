@@ -1,6 +1,11 @@
 BIN := bin/weather-panel
 
-.PHONY: build run test
+.PHONY: generate build run test
+
+# Regenerates the committed sqlc and templ code.
+generate:
+	go tool templ generate
+	go tool sqlc generate
 
 build:
 	go build -o $(BIN) ./cmd/weather-panel
