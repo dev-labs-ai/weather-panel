@@ -17,7 +17,7 @@ import (
 func getIndex(t *testing.T) (*httptest.ResponseRecorder, htmltest.Doc) {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic)
+	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic, stubLookup{})
 	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET / status = %d, want %d", rec.Code, http.StatusOK)

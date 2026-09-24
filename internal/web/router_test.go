@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -10,8 +11,16 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/dev-labs-ai/weather-panel/internal/weather"
 	"github.com/dev-labs-ai/weather-panel/internal/web"
 )
+
+// stubLookup answers every search with "not found", for tests that do not look at the result.
+type stubLookup struct{}
+
+func (stubLookup) Lookup(context.Context, string) (weather.Report, error) {
+	return weather.Report{}, weather.ErrNotFound
+}
 
 var testStatic = fstest.MapFS{
 	"js/htmx.min.js": {Data: []byte("var htmx={};")},
@@ -21,7 +30,7 @@ var testStatic = fstest.MapFS{
 func TestResponsesCarrySecurityHeaders(t *testing.T) {
 	t.Parallel()
 
-	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic)
+	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic, stubLookup{})
 	for _, tt := range []struct {
 		name, method, target string
 		wantStatus           int
@@ -61,7 +70,7 @@ func TestHealthz(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic)
+	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic, stubLookup{})
 	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 
 	if rec.Code != http.StatusOK {
@@ -80,7 +89,7 @@ func TestRequestLogOmitsQueryAndClientAddress(t *testing.T) {
 			t.Parallel()
 
 			var logs bytes.Buffer
-			router := web.NewRouter(slog.New(slog.NewJSONHandler(&logs, nil)), testStatic)
+			router := web.NewRouter(slog.New(slog.NewJSONHandler(&logs, nil)), testStatic, stubLookup{})
 			req := httptest.NewRequest(http.MethodGet, target, nil)
 			req.RemoteAddr = "203.0.113.7:51234"
 			req.Header.Set("X-Forwarded-For", "198.51.100.9")
@@ -110,7 +119,7 @@ func TestRequestLogRecordsRoutePattern(t *testing.T) {
 	t.Parallel()
 
 	var logs bytes.Buffer
-	router := web.NewRouter(slog.New(slog.NewJSONHandler(&logs, nil)), testStatic)
+	router := web.NewRouter(slog.New(slog.NewJSONHandler(&logs, nil)), testStatic, stubLookup{})
 	router.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/healthz?city=Recife", nil))
 
 	var entry struct {
@@ -129,7 +138,7 @@ func TestRequestLogRecordsRoutePattern(t *testing.T) {
 func TestStaticFiles(t *testing.T) {
 	t.Parallel()
 
-	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic)
+	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic, stubLookup{})
 	for _, tt := range []struct {
 		target, wantType, wantBody string
 	}{
@@ -161,7 +170,7 @@ func TestStaticFiles(t *testing.T) {
 func TestStaticFilesRejects(t *testing.T) {
 	t.Parallel()
 
-	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic)
+	router := web.NewRouter(slog.New(slog.DiscardHandler), testStatic, stubLookup{})
 	for _, target := range []string{
 		"/static/js/missing.js",
 		"/static/js/",

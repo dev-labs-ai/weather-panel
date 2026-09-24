@@ -10,13 +10,14 @@ import (
 )
 
 // NewRouter returns the service's HTTP handler with every route and middleware in place. static holds the files
-// served under /static/.
-func NewRouter(logger *slog.Logger, static fs.FS) http.Handler {
+// served under /static/, and lookup answers the searches.
+func NewRouter(logger *slog.Logger, static fs.FS, lookup Lookuper) http.Handler {
 	r := chi.NewRouter()
 	r.Use(securityHeaders, requestLogger(logger), recoverer(logger), middleware.GetHead)
 
-	p := &pages{logger: logger}
+	p := &pages{logger: logger, lookup: lookup}
 	r.Get("/", p.index)
+	r.Get("/weather", p.weather)
 	r.Get("/healthz", healthz)
 	r.Get("/static/*", staticFiles(static))
 	return r

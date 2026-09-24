@@ -20,6 +20,8 @@ import (
 	"github.com/dev-labs-ai/weather-panel/db"
 	"github.com/dev-labs-ai/weather-panel/internal/cache"
 	"github.com/dev-labs-ai/weather-panel/internal/config"
+	"github.com/dev-labs-ai/weather-panel/internal/openmeteo"
+	"github.com/dev-labs-ai/weather-panel/internal/weather"
 	"github.com/dev-labs-ai/weather-panel/internal/web"
 	assets "github.com/dev-labs-ai/weather-panel/web"
 )
@@ -55,12 +57,16 @@ func run(ctx context.Context, getenv func(string) string, stdout io.Writer) erro
 		return fmt.Errorf("open database pool: %w", err)
 	}
 	defer pool.Close()
-	go cache.New(pool).RunCleanup(ctx, time.Hour, logger)
+	cacheStore := cache.New(pool)
+	go cacheStore.RunCleanup(ctx, time.Hour, logger)
+
+	client := openmeteo.NewClient(cfg.GeocodingURL, cfg.ForecastURL)
+	service := weather.NewService(client, cacheStore, cfg.LookupTimeout, logger)
 
 	// A request lasts at most the lookup deadline plus rendering, and shutdown waits that long for it to finish.
 	requestTimeout := cfg.LookupTimeout + 5*time.Second
 	srv := &http.Server{
-		Handler:           web.NewRouter(logger, assets.Static),
+		Handler:           web.NewRouter(logger, assets.Static, service),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      requestTimeout,

@@ -161,7 +161,7 @@ unit or language switch.
   - Done when: component tests render every state with representative data and assert the labels, units, attribution
     link, and message texts.
 
-- [ ] **T14: Implement the `/weather` handler**
+- [x] **T14: Implement the `/weather` handler**
   - Depends on: T07, T13
   - Covers: FR1, FR2, FR3, FR10, FR11, FR12, FR13, AC-01, AC-02, AC-03, AC-05, AC-06, AC-07, AC-13
   - Read `city`, call the service, and map the outcome to the status codes in the techspec (`200`, `422`, `404`,
