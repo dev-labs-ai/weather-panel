@@ -79,7 +79,7 @@ unit or language switch.
     reason, a `500`, malformed JSON, each missing required field, an absent optional `admin1` or `country`, and a
     timeout.
 
-- [ ] **T07: Implement the lookup service**
+- [x] **T07: Implement the lookup service**
   - Depends on: T04, T06
   - Covers: FR3, FR10, AC-01, AC-06, AC-07
   - The service normalizes the input, resolves the location, fetches the conditions, and returns a `Report` or one of
