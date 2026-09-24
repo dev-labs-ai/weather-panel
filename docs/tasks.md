@@ -23,7 +23,7 @@ unit or language switch.
   - Done when: `make build` and `make test` succeed, and `go tool templ version` and `go tool sqlc version` print the
     pinned versions.
 
-- [ ] **T02: Load configuration from the environment**
+- [x] **T02: Load configuration from the environment**
   - Depends on: T01
   - Implement `internal/config` with `PORT`, `DATABASE_URL`, `LOG_LEVEL`, `LOOKUP_TIMEOUT`,
     `OPEN_METEO_GEOCODING_URL`, and `OPEN_METEO_FORECAST_URL`, using the defaults from the techspec.
