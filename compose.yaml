@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: weather
+      POSTGRES_PASSWORD: weather
+      POSTGRES_DB: weather
+    ports:
+      # Published on the loopback interface only, for running the service and the integration tests on the host.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # PostgreSQL 18 images keep their data under a version directory inside /var/lib/postgresql.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weather -d weather"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  db-data:

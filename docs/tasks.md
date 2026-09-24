@@ -91,7 +91,7 @@ unit or language switch.
 
 ## Phase 3: Cache
 
-- [ ] **T08: Add PostgreSQL to the local environment**
+- [x] **T08: Add PostgreSQL to the local environment**
   - Depends on: T01
   - Create `compose.yaml` with the `db` service (`postgres:18-alpine`, a named volume, a `pg_isready` healthcheck).
     The `app` service comes in T16.
