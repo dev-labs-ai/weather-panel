@@ -63,7 +63,7 @@ unit or language switch.
   - Done when: unit tests cover every WMO code in the table, an unknown code, the rounding edges, and locations with and
     without `admin1` and `country`.
 
-- [ ] **T06: Implement the Open-Meteo client**
+- [x] **T06: Implement the Open-Meteo client**
   - Depends on: T02
   - Covers: FR3, FR5, FR8, FR10, AC-01, AC-06, AC-07
   - In `internal/openmeteo`, add a Geocoding call (`count=1`, `language=pt`, `format=json`) and a Forecast call
