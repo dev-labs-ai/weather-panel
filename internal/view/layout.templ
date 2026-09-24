@@ -1,0 +1,24 @@
+package view
+
+import assets "github.com/dev-labs-ai/weather-panel/web"
+
+// layout is the document shell. Every asset comes from the application's own origin; the Content Security Policy
+// refuses anything else.
+templ layout(title string) {
+	<!DOCTYPE html>
+	<html lang="pt-BR">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<meta name="description" content="Consulte o clima atual de qualquer cidade: temperatura, sensação térmica, condição do tempo, umidade e vento."/>
+			// An empty icon keeps the browser from requesting /favicon.ico.
+			<link rel="icon" href="data:,"/>
+			<link rel="stylesheet" href={ assets.AssetPath("css/app.css") }/>
+			<script src={ assets.AssetPath("js/htmx.min.js") } defer></script>
+		</head>
+		<body>
+			{ children... }
+		</body>
+	</html>
+}

@@ -15,6 +15,8 @@ func NewRouter(logger *slog.Logger, static fs.FS) http.Handler {
 	r := chi.NewRouter()
 	r.Use(securityHeaders, requestLogger(logger), recoverer(logger), middleware.GetHead)
 
+	p := &pages{logger: logger}
+	r.Get("/", p.index)
 	r.Get("/healthz", healthz)
 	r.Get("/static/*", staticFiles(static))
 	return r

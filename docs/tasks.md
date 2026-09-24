@@ -131,7 +131,7 @@ unit or language switch.
   - Done when: `make css build` produces a binary that serves both assets, and the page loads no resource from another
     origin.
 
-- [ ] **T12: Build the layout, page, and search form**
+- [x] **T12: Build the layout, page, and search form**
   - Depends on: T11
   - Covers: FR1, FR9, FR11, FR12, AC-08, AC-10, AC-11
   - Build a templ layout with `<html lang="pt-BR">`, a page title, and the CSS and htmx references.

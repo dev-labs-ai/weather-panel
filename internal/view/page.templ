@@ -1,0 +1,55 @@
+package view
+
+// pageTitle names the panel in the browser tab.
+const pageTitle = "Clima agora"
+
+// Page renders the whole panel. city refills the search input, so the no-JavaScript result page keeps what the user
+// typed. result fills the result region; nil leaves it empty.
+templ Page(city string, result templ.Component) {
+	@layout(pageTitle) {
+		<main>
+			<h1>Clima agora</h1>
+			<p>Veja a temperatura, a sensação térmica, a condição do tempo, a umidade e o vento de uma cidade neste momento.</p>
+			@searchForm(city)
+			// The result region sits outside the form, so swapping it never touches the input: the user can edit the
+			// city and search again after any outcome.
+			<section id="result" aria-live="polite" aria-atomic="true">
+				if result != nil {
+					@result
+				}
+			</section>
+		</main>
+	}
+}
+
+// searchForm is a plain GET form, so the search works without JavaScript. With htmx, it swaps the response into
+// #result instead, disables only the button while the request is in flight, and drops any submission made before
+// the current one finishes. The input stays enabled, so focus is never lost.
+templ searchForm(city string) {
+	<form
+		action="/weather"
+		method="get"
+		role="search"
+		hx-get="/weather"
+		hx-target="#result"
+		hx-swap="innerHTML"
+		hx-disable="find button"
+		hx-sync="this:drop"
+		hx-indicator="#loading"
+	>
+		<label for="city">Cidade</label>
+		<p id="city-hint">Digite o nome de uma cidade, por exemplo: Recife.</p>
+		<input
+			id="city"
+			name="city"
+			type="text"
+			value={ city }
+			maxlength="100"
+			autocomplete="off"
+			enterkeyhint="search"
+			aria-describedby="city-hint city-error"
+		/>
+		<button type="submit">Buscar</button>
+		<p id="loading" class="htmx-indicator" role="status">Buscando o clima…</p>
+	</form>
+}
