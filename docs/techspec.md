@@ -27,6 +27,7 @@ vendored assets.
 | htmx            | 4.0                | Partial page updates without a client-side application                  |
 | Tailwind CSS    | 4.3 (standalone)   | Styling, compiled at build time by the standalone CLI (no Node.js)      |
 | Docker          | Engine + Compose   | Container image and local environment (app + PostgreSQL)                |
+| chromedp        | v0.16              | Browser tests driving a local Chrome (test only, no Node.js)            |
 
 htmx 4 changed several defaults relative to htmx 2. This specification relies on the htmx 4 behavior, so the project
 must not downgrade:
@@ -73,6 +74,7 @@ web/embed.go                embeds web/static
 web/static/js/htmx.min.js   vendored htmx 4.0.0 (served from the same origin)
 web/static/css/app.css      Tailwind output (built, not committed)
 web/styles/app.css          Tailwind entry point
+test/browser/               browser tests (chromedp, `browser` build tag)
 sqlc.yaml
 compose.yaml
 Dockerfile
@@ -397,6 +399,14 @@ templ renders one layout and the components below. The sketch shows the attribut
 | Browser          | Real browser at 360 px and 1280 px: network requests, keyboard flow, loading state, no horizontal scroll | AC-04, AC-08, AC-10, AC-12 |
 | Manual           | Screen reader pass over loading, success, validation, and error states         | AC-11                             |
 | Performance      | Representative set of cities against the real Open-Meteo, measuring p95 end to end | AC-09                          |
+
+Browser tests use [chromedp](https://github.com/chromedp/chromedp), which drives a local Chrome or Chromium through
+the DevTools Protocol from ordinary Go tests, so the project still needs no Node.js toolchain and the tests share the
+Go test runner, assertions, and module pinning. They live in `test/browser` behind the `browser` build tag, which keeps
+`go test ./...` hermetic, and run against the panel started by `docker compose up` (`make test-browser`, or set
+`BROWSER_TEST_URL` for another address). To observe a lookup in flight (AC-08), they hold the `/weather` request with
+the DevTools `Fetch` domain instead of relying on network timing. They search the real Open-Meteo, so a search that
+must show a result is retried when the first attempt reports the provider unavailable.
 
 ## Open questions
 

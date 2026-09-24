@@ -200,7 +200,7 @@ unit or language switch.
 
 ## Phase 6: Verification
 
-- [ ] **T18: Add automated browser tests**
+- [x] **T18: Add automated browser tests**
   - Depends on: T16
   - Covers: FR9, FR14, AC-04, AC-08, AC-10, AC-12
   - Choose the browser test tool and record the choice in the techspec. The techspec leaves it open, and the project

@@ -12,7 +12,7 @@ TAILWIND_PLATFORM := $(TAILWIND_OS)-$(TAILWIND_ARCH)
 TAILWIND := bin/tailwindcss-$(TAILWIND_VERSION)-$(TAILWIND_PLATFORM)
 SHA256SUM := $(if $(shell command -v sha256sum),sha256sum,shasum -a 256)
 
-.PHONY: generate check-generated tailwind css build run test
+.PHONY: generate check-generated tailwind css build run test test-browser
 
 # Regenerates the committed sqlc and templ code.
 generate:
@@ -52,3 +52,8 @@ run: build
 
 test:
 	go test ./...
+
+# Runs the browser tests against the panel at BROWSER_TEST_URL (default http://localhost:8080), such as the one
+# `docker compose up -d --build` starts. Needs a local Chrome or Chromium.
+test-browser:
+	go test -tags browser -count=1 ./test/browser
