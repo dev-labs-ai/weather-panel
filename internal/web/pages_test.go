@@ -181,20 +181,40 @@ func TestIndexResultRegion(t *testing.T) {
 	_, d := getIndex(t)
 
 	result := d.ByID("result")
-	if htmltest.Attr(result, "aria-live") != "polite" || htmltest.Attr(result, "aria-atomic") != "true" {
-		t.Errorf(`#result aria-live = %q, aria-atomic = %q, want "polite" and "true"`, htmltest.Attr(result, "aria-live"),
-			htmltest.Attr(result, "aria-atomic"))
-	}
 	if htmltest.Within(result, d.One("form")) {
 		t.Error("#result is inside the form; swapping it would replace the input")
 	}
 	if !htmltest.Within(result, d.One("main")) {
 		t.Error("#result is outside <main>")
 	}
+	// Announcements go through #announcer; a live result region would announce its content piece by piece.
+	if htmltest.HasAttr(result, "aria-live") || htmltest.HasAttr(result, "role") {
+		t.Error("#result is a live region; announcements belong to #announcer")
+	}
 	if got := htmltest.Text(result); got != "" {
 		t.Errorf("#result = %q, want it empty before a search", got)
 	}
 	if d.HasID("city-error") {
 		t.Error("the page shows a validation message before any search")
+	}
+}
+
+func TestIndexAnnouncer(t *testing.T) {
+	t.Parallel()
+	_, d := getIndex(t)
+
+	announcer := d.ByID("announcer")
+	if htmltest.Attr(announcer, "role") != "status" {
+		t.Errorf(`#announcer role = %q, want "status"`, htmltest.Attr(announcer, "role"))
+	}
+	if !slices.Contains(strings.Fields(htmltest.Attr(announcer, "class")), "sr-only") {
+		t.Errorf("#announcer class = %q, want it visually hidden with sr-only", htmltest.Attr(announcer, "class"))
+	}
+	// htmx fills it out of band; the element must survive every swap of #result.
+	if htmltest.Within(announcer, d.ByID("result")) || htmltest.Within(announcer, d.One("form")) {
+		t.Error("#announcer is inside a region that swaps replace")
+	}
+	if got := htmltest.Text(announcer); got != "" {
+		t.Errorf("#announcer = %q, want it empty before a search", got)
 	}
 }

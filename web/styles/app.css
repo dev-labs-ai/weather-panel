@@ -61,3 +61,10 @@
     color-scheme: light dark;
   }
 }
+
+/* While a lookup is in flight (htmx marks the loading indicator), the announcer's previous text leaves the
+   accessibility tree. The response's text then arrives as an addition, which screen readers announce even when it
+   repeats the previous one, such as a second "unavailable" after a retry. */
+body:has(#loading.htmx-request) #announcer > * {
+  display: none;
+}

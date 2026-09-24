@@ -246,3 +246,38 @@ func TestPageWithAResult(t *testing.T) {
 		t.Error("the result is outside #result")
 	}
 }
+
+func TestAnnouncementSwapsTextIntoTheAnnouncer(t *testing.T) {
+	t.Parallel()
+	body, d := render(t, view.Announcement("Cidade não encontrada. <b>x</b>"))
+
+	divs := d.Tags("div")
+	if len(divs) != 1 || htmltest.Attr(divs[0], "hx-swap-oob") != "innerHTML:#announcer" {
+		t.Fatalf("announcement = %s, want one div swapped into #announcer's content", body)
+	}
+	if len(d.Tags("span")) != 1 || !htmltest.Within(d.One("span"), divs[0]) {
+		t.Errorf("announcement = %s, want the text in one span, which the stylesheet hides during a lookup", body)
+	}
+	if len(d.Tags("b")) != 0 || htmltest.Text(divs[0]) != "Cidade não encontrada. <b>x</b>" {
+		t.Errorf("announcement text = %q, want it escaped as plain text", htmltest.Text(divs[0]))
+	}
+}
+
+func TestAnnouncementsReadInOrder(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct{ got, want string }{
+		{view.ResultAnnouncement(recife), "Agora em Recife, Pernambuco, Brasil. Temperatura: 25 °C. " +
+			"Condição: Nublado. Sensação térmica: 29 °C. Umidade: 77%. Vento: 4 km/h."},
+		{view.ValidationAnnouncement("Digite o nome de uma cidade para buscar o clima."),
+			"Confira o nome da cidade. Digite o nome de uma cidade para buscar o clima."},
+		{view.NotFoundAnnouncement(), "Cidade não encontrada. Não encontramos nenhuma cidade com esse nome. " +
+			"Confira a grafia ou tente uma cidade próxima e busque de novo."},
+		{view.UnavailableAnnouncement(), "Clima indisponível no momento. Não conseguimos obter os dados " +
+			"meteorológicos agora. Aguarde alguns instantes e busque de novo."},
+	} {
+		if tt.got != tt.want {
+			t.Errorf("announcement = %q, want %q", tt.got, tt.want)
+		}
+	}
+}

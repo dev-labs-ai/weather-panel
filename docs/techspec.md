@@ -322,10 +322,17 @@ templ renders one layout and the components below. The sketch shows the attribut
     <button type="submit">Buscar</button>
     <p id="loading" class="htmx-indicator" role="status">Buscando o clima…</p>
   </form>
-  <section id="result" aria-live="polite" aria-atomic="true">
+  <section id="result">
     <!-- result, validation error (#city-error), not found, or unavailable -->
   </section>
+  <p id="announcer" class="sr-only" role="status"></p>
 </main>
+```
+
+Every htmx response also carries the announcement for that outcome, swapped into the announcer out of band:
+
+```html
+<div hx-swap-oob="innerHTML:#announcer"><span>Cidade não encontrada. Não encontramos …</span></div>
 ```
 
 - **Duplicate submissions (FR9, AC-08).** `hx-disable` disables the submit button while the request is in flight and
@@ -334,9 +341,16 @@ templ renders one layout and the components below. The sketch shows the attribut
 - **Validation (FR2, AC-05).** The server is the single source of validation messages; the form uses no native
   constraint attributes besides `maxlength`, so every message has the same wording and presentation. The validation
   message element has the id `city-error`, which links it to the input through `aria-describedby`.
-- **Announcements (AC-11).** The result region is a polite live region, so results and messages are announced when
-  swapped in. Messages are text, never only an icon or a color. Whether the loading indicator is announced reliably must
-  be checked with a screen reader; if it is not, the loading message moves into the live region.
+- **Announcements (AC-11).** Screen readers learn about each outcome through `#announcer`, a visually hidden status
+  region that stays in the page. Every htmx response replaces its content out of band with one text in reading order:
+  the location and each reading with its label for a result, the heading and the text for a message. The result region
+  itself is not live: a screen reader pass with Orca and Chrome showed that a live region receiving a whole result at
+  once is read piece by piece, in the order the browser reports the changes, with labels separated from their values,
+  and that part of a message could be dropped. While a lookup is in flight, the stylesheet hides the announcer's
+  previous text (`body:has(#loading.htmx-request) #announcer > *`), so the response's text arrives as an addition and
+  is announced even when it repeats the previous one, such as a second "unavailable" after a retry. The loading
+  indicator keeps its own `role="status"`; the same pass showed that it is announced when a lookup takes long enough
+  to show it. Messages are text, never only an icon or a color.
 - **Keyboard (AC-10).** The native form, input, and button give a logical focus order; focus stays on the input after a
   lookup. Focus styles use Tailwind `focus-visible:` utilities with a visible outline.
 - **Attribution (FR13, AC-13).** The result component ends with "Dados meteorológicos por

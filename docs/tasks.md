@@ -212,7 +212,7 @@ unit or language switch.
     - AC-12: no horizontal scrolling at 360 px and 1280 px.
   - Done when: the tests run locally against `docker compose` and pass.
 
-- [ ] **T19: Run a screen reader pass**
+- [x] **T19: Run a screen reader pass**
   - Depends on: T16
   - Covers: AC-11
   - Check loading, success, validation, not-found, and unavailable states with a screen reader.

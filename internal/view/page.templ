@@ -13,11 +13,15 @@ templ Page(city string, result templ.Component) {
 			@searchForm(city)
 			// The result region sits outside the form, so swapping it never touches the input: the user can edit the
 			// city and search again after any outcome.
-			<section id="result" class="mt-6" aria-live="polite" aria-atomic="true">
+			<section id="result" class="mt-6">
 				if result != nil {
 					@result
 				}
 			</section>
+			// Screen readers announce each response through this live region, which every htmx response fills out of
+			// band with one text in reading order (see Announcement). The result region is not live itself: a screen
+			// reader would read its many new elements piece by piece and out of order.
+			<p id="announcer" class="sr-only" role="status"></p>
 		</main>
 	}
 }

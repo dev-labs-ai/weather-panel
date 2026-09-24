@@ -47,23 +47,23 @@ templ Result(r weather.Report) {
 // ValidationMessage explains why the input cannot be searched. Its text element has the id city-error, which the
 // input's aria-describedby points at, so the message is also read as the input's description.
 templ ValidationMessage(message string) {
-	@messageBox("Confira o nome da cidade") {
+	@messageBox(validationTitle) {
 		<p id="city-error" class="mt-1">{ message }</p>
 	}
 }
 
 // NotFoundMessage says that no place matches the name and invites a new search.
 templ NotFoundMessage() {
-	@messageBox("Cidade não encontrada") {
-		<p class="mt-1">Não encontramos nenhuma cidade com esse nome. Confira a grafia ou tente uma cidade próxima e busque de novo.</p>
+	@messageBox(notFoundTitle) {
+		<p class="mt-1">{ notFoundText }</p>
 	}
 }
 
 // UnavailableMessage says that the weather data cannot be fetched right now, without naming the cause, and invites
 // a retry.
 templ UnavailableMessage() {
-	@messageBox("Clima indisponível no momento") {
-		<p class="mt-1">Não conseguimos obter os dados meteorológicos agora. Aguarde alguns instantes e busque de novo.</p>
+	@messageBox(unavailableTitle) {
+		<p class="mt-1">{ unavailableText }</p>
 	}
 }
 
@@ -74,4 +74,12 @@ templ messageBox(title string) {
 		<h2 class="text-lg/snug font-semibold">{ title }</h2>
 		{ children... }
 	</div>
+}
+
+// Announcement puts text into the page's #announcer live region, out of band, when htmx swaps a response into the
+// result region. htmx strips this wrapper and replaces only the announcer's content, so the live region itself
+// stays in place and screen readers announce the change. The span lets the stylesheet hide the previous text while
+// a lookup is in flight, so a repeated answer is announced again.
+templ Announcement(text string) {
+	<div hx-swap-oob="innerHTML:#announcer"><span>{ text }</span></div>
 }

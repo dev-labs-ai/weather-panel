@@ -86,23 +86,39 @@ func search(t *testing.T, app http.Handler, city string, htmx bool) *httptest.Re
 	return rec
 }
 
+const unavailableAnnouncement = "Clima indisponível no momento. Não conseguimos obter os dados meteorológicos " +
+	"agora. Aguarde alguns instantes e busque de novo."
+
 var outcomes = []struct {
-	name, city string
-	wantStatus int
-	wantTitle  string // the result region's heading
-	wantText   string // text the result region must contain
+	name, city       string
+	wantStatus       int
+	wantTitle        string // the result region's heading
+	wantText         string // text the result region must contain
+	wantAnnouncement string // what the screen reader announcer receives
 }{
-	{"success", "Recife", http.StatusOK, "Agora em Recife, Pernambuco, Brasil", "Temperatura 25 °C Condição Nublado"},
+	{"success", "Recife", http.StatusOK, "Agora em Recife, Pernambuco, Brasil", "Temperatura 25 °C Condição Nublado",
+		"Agora em Recife, Pernambuco, Brasil. Temperatura: 25\u00a0°C. Condição: Nublado. " +
+			"Sensação térmica: 29\u00a0°C. Umidade: 77%. Vento: 4\u00a0km/h."},
 	{"invalid input", "  a ", http.StatusUnprocessableEntity, "Confira o nome da cidade",
-		"O nome da cidade precisa ter pelo menos duas letras ou números."},
+		"O nome da cidade precisa ter pelo menos duas letras ou números.",
+		"Confira o nome da cidade. O nome da cidade precisa ter pelo menos duas letras ou números. " +
+			"Complete o nome e busque de novo."},
 	{"empty input", "", http.StatusUnprocessableEntity, "Confira o nome da cidade",
-		"Digite o nome de uma cidade para buscar o clima."},
-	{"not found", "Xyzzyqqq", http.StatusNotFound, "Cidade não encontrada", "Não encontramos nenhuma cidade"},
-	{"upstream error", "Falha", http.StatusBadGateway, "Clima indisponível no momento", "busque de novo"},
+		"Digite o nome de uma cidade para buscar o clima.",
+		"Confira o nome da cidade. Digite o nome de uma cidade para buscar o clima."},
+	{"not found", "Xyzzyqqq", http.StatusNotFound, "Cidade não encontrada", "Não encontramos nenhuma cidade",
+		"Cidade não encontrada. Não encontramos nenhuma cidade com esse nome. Confira a grafia ou tente uma " +
+			"cidade próxima e busque de novo."},
+	{"upstream error", "Falha", http.StatusBadGateway, "Clima indisponível no momento", "busque de novo",
+		unavailableAnnouncement},
 	{"invalid upstream response", "Quebrado", http.StatusBadGateway, "Clima indisponível no momento",
-		"busque de novo"},
-	{"upstream timeout", "Lento", http.StatusGatewayTimeout, "Clima indisponível no momento", "busque de novo"},
+		"busque de novo", unavailableAnnouncement},
+	{"upstream timeout", "Lento", http.StatusGatewayTimeout, "Clima indisponível no momento", "busque de novo",
+		unavailableAnnouncement},
 }
+
+// isOOB reports whether n is swapped out of band into the announcer.
+func isOOB(n *html.Node) bool { return htmltest.Attr(n, "hx-swap-oob") == "innerHTML:#announcer" }
 
 func TestWeatherFragment(t *testing.T) {
 	t.Parallel()
@@ -127,6 +143,15 @@ func TestWeatherFragment(t *testing.T) {
 			}
 			if got := htmltest.Text(d.Root); !strings.Contains(got, tt.wantText) {
 				t.Errorf("fragment text = %q, want it to contain %q", got, tt.wantText)
+			}
+			oob := htmltest.All(d.Root, isOOB)
+			if len(oob) != 1 {
+				t.Fatalf("fragment has %d out-of-band announcements, want 1", len(oob))
+			}
+			span := oob[0].FirstChild
+			if span == nil || span != oob[0].LastChild || span.Data != "span" || span.FirstChild == nil ||
+				span.FirstChild.Data != tt.wantAnnouncement {
+				t.Errorf("announcement = %q, want exactly %q in one span", htmltest.Text(oob[0]), tt.wantAnnouncement)
 			}
 		})
 	}
@@ -157,6 +182,13 @@ func TestWeatherFullPage(t *testing.T) {
 			}
 			if got := htmltest.Text(result); !strings.Contains(got, tt.wantText) {
 				t.Errorf("#result text = %q, want it to contain %q", got, tt.wantText)
+			}
+			// A full page load is read from the top; only htmx swaps need the announcer.
+			if got := htmltest.Text(d.ByID("announcer")); got != "" {
+				t.Errorf("#announcer = %q, want it empty on a full page", got)
+			}
+			if len(htmltest.All(d.Root, isOOB)) != 0 {
+				t.Error("full page holds an out-of-band swap")
 			}
 		})
 	}
@@ -193,14 +225,23 @@ func TestWeatherUsesTheFirstPlaceWithoutAskingToChoose(t *testing.T) {
 	}
 }
 
-// TestErrorReplacesAPreviousResult swaps two responses into the page's result region the way htmx does with
-// hx-swap="innerHTML", and checks that nothing of the first result survives the error.
+// TestErrorReplacesAPreviousResult swaps two responses into the page the way htmx does: the out-of-band
+// announcement replaces the announcer's content, and the rest replaces the result region's content
+// (hx-swap="innerHTML"). Nothing of the first result may survive the error in either place.
 func TestErrorReplacesAPreviousResult(t *testing.T) {
 	t.Parallel()
 	app, _ := newApp(t)
 
 	page := htmltest.Parse(t, search(t, app, "", false).Body.String())
-	result := page.ByID("result")
+	result, announcer := page.ByID("result"), page.ByID("announcer")
+	replaceChildren := func(parent *html.Node, children []*html.Node) {
+		for c := parent.FirstChild; c != nil; c = parent.FirstChild {
+			parent.RemoveChild(c)
+		}
+		for _, c := range children {
+			parent.AppendChild(c)
+		}
+	}
 	swap := func(fragment string) {
 		t.Helper()
 		nodes, err := html.ParseFragment(strings.NewReader(fragment), &html.Node{
@@ -209,27 +250,41 @@ func TestErrorReplacesAPreviousResult(t *testing.T) {
 		if err != nil {
 			t.Fatalf("parse fragment: %v", err)
 		}
-		for c := result.FirstChild; c != nil; c = result.FirstChild {
-			result.RemoveChild(c)
-		}
+		var main []*html.Node
 		for _, n := range nodes {
-			result.AppendChild(n)
+			if n.Type != html.ElementNode || !isOOB(n) {
+				main = append(main, n)
+				continue
+			}
+			var text []*html.Node
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				text = append(text, c)
+			}
+			for _, c := range text {
+				n.RemoveChild(c)
+			}
+			replaceChildren(announcer, text)
 		}
+		replaceChildren(result, main)
 	}
 
 	swap(search(t, app, "Recife", true).Body.String())
-	if !strings.Contains(htmltest.Text(result), "Recife") {
-		t.Fatalf("first search did not show Recife: %q", htmltest.Text(result))
+	if !strings.Contains(htmltest.Text(result), "Recife") || !strings.Contains(htmltest.Text(announcer), "Recife") {
+		t.Fatalf("first search did not show and announce Recife: %q, %q", htmltest.Text(result),
+			htmltest.Text(announcer))
 	}
 
 	for _, city := range []string{"Falha", "Lento", "Xyzzyqqq", "a"} {
 		swap(search(t, app, "Recife", true).Body.String())
 		swap(search(t, app, city, true).Body.String())
 
-		got := htmltest.Text(result)
-		for _, stale := range []string{"Recife", "Temperatura", "°C", "Open-Meteo"} {
-			if strings.Contains(got, stale) {
-				t.Errorf("after searching %q, #result = %q, still showing %q", city, got, stale)
+		for _, region := range []*html.Node{result, announcer} {
+			got := htmltest.Text(region)
+			for _, stale := range []string{"Recife", "Temperatura", "°C", "Open-Meteo"} {
+				if strings.Contains(got, stale) {
+					t.Errorf("after searching %q, #%s = %q, still showing %q", city, htmltest.Attr(region, "id"), got,
+						stale)
+				}
 			}
 		}
 		if len(htmltest.All(result, func(n *html.Node) bool { return n.Data == "article" })) != 0 {

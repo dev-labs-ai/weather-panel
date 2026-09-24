@@ -29,37 +29,40 @@ func (p *pages) index(w http.ResponseWriter, r *http.Request) {
 	p.render(w, r, http.StatusOK, view.Page("", nil))
 }
 
-// weather looks up the city in the query string. An htmx request gets only the result region's content; any other
-// request gets the whole page, with the typed city kept in the input, so the search works without JavaScript. The
-// status code reflects the outcome, and htmx 4 swaps error responses into the result region like any other, so a
-// previous result never stays next to a new error.
+// weather looks up the city in the query string. An htmx request gets the result region's content plus the text
+// for the screen reader announcer, which htmx swaps in out of band; any other request gets the whole page, with the
+// typed city kept in the input, so the search works without JavaScript. The status code reflects the outcome, and
+// htmx 4 swaps error responses into the result region like any other, so a previous result never stays next to a
+// new error.
 func (p *pages) weather(w http.ResponseWriter, r *http.Request) {
 	city := r.URL.Query().Get("city")
 	report, err := p.lookup.Lookup(r.Context(), city)
-	status, content := outcome(report, err)
+	status, content, announcement := outcome(report, err)
 
 	w.Header().Add("Vary", "HX-Request")
 	if r.Header.Get("HX-Request") == "true" {
-		p.render(w, r, status, content)
+		p.render(w, r, status, templ.Join(content, view.Announcement(announcement)))
 		return
 	}
 	p.render(w, r, status, view.Page(city, content))
 }
 
-// outcome maps a lookup's result to the response status and the result region's content.
-func outcome(report weather.Report, err error) (int, templ.Component) {
+// outcome maps a lookup's result to the response status, the result region's content, and the text announced to
+// screen readers.
+func outcome(report weather.Report, err error) (int, templ.Component, string) {
 	var verr weather.ValidationError
 	switch {
 	case err == nil:
-		return http.StatusOK, view.Result(report)
+		return http.StatusOK, view.Result(report), view.ResultAnnouncement(report)
 	case errors.As(err, &verr):
-		return http.StatusUnprocessableEntity, view.ValidationMessage(verr.Message)
+		return http.StatusUnprocessableEntity, view.ValidationMessage(verr.Message),
+			view.ValidationAnnouncement(verr.Message)
 	case errors.Is(err, weather.ErrNotFound):
-		return http.StatusNotFound, view.NotFoundMessage()
+		return http.StatusNotFound, view.NotFoundMessage(), view.NotFoundAnnouncement()
 	case errors.Is(err, weather.ErrUpstreamTimeout):
-		return http.StatusGatewayTimeout, view.UnavailableMessage()
+		return http.StatusGatewayTimeout, view.UnavailableMessage(), view.UnavailableAnnouncement()
 	default:
-		return http.StatusBadGateway, view.UnavailableMessage()
+		return http.StatusBadGateway, view.UnavailableMessage(), view.UnavailableAnnouncement()
 	}
 }
 

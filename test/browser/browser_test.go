@@ -317,3 +317,56 @@ func TestNoHorizontalScrolling(t *testing.T) {
 		})
 	}
 }
+
+// AC-11: each response reaches screen readers through the #announcer live region as one text, and a response that
+// repeats the previous one is announced again: the previous text leaves the accessibility tree while the lookup is
+// in flight, so the repeated text arrives as an addition.
+func TestAnnouncerReadsEveryResponse(t *testing.T) {
+	ctx := newTab(t, 1280, 800)
+
+	paused := make(chan fetch.RequestID, 10)
+	chromedp.ListenTarget(ctx, func(ev any) {
+		if ev, ok := ev.(*fetch.EventRequestPaused); ok {
+			paused <- ev.RequestID
+		}
+	})
+	open(t, ctx)
+
+	const notFound = "Cidade não encontrada. Não encontramos nenhuma cidade com esse nome. Confira a grafia ou tente " +
+		"uma cidade próxima e busque de novo."
+	announced := `(() => {
+		const el = document.querySelector("#announcer > *");
+		return el && getComputedStyle(el).display !== "none" ? el.textContent : "";
+	})()`
+	if got := eval[string](t, ctx, announced); got != "" {
+		t.Fatalf("announcer = %q before any search, want it empty", got)
+	}
+	search(t, ctx, "Xyzzyqqq")
+	if got := eval[string](t, ctx, announced); got != notFound {
+		t.Fatalf("announcer = %q, want %q", got, notFound)
+	}
+
+	// Repeat the search and hold it in flight.
+	run(t, ctx,
+		fetch.Enable().WithPatterns([]*fetch.RequestPattern{{URLPattern: "*/weather?*"}}),
+		chromedp.Focus("#city", chromedp.ByID),
+		chromedp.KeyEvent(kb.Enter),
+	)
+	var id fetch.RequestID
+	select {
+	case id = <-paused:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the repeated search sent no request")
+	}
+	if got := eval[string](t, ctx, announced); got != "" {
+		t.Errorf("announcer = %q while the lookup is in flight, want the previous text hidden", got)
+	}
+	if role := eval[string](t, ctx, `document.getElementById("announcer").getAttribute("role")`); role != "status" {
+		t.Errorf("announcer role = %q, want the live region to stay in place", role)
+	}
+	run(t, ctx, fetch.ContinueRequest(id))
+	waitFor(t, ctx, `!document.querySelector("form button").disabled`)
+	if got := eval[string](t, ctx, announced); got != notFound {
+		t.Errorf("announcer = %q after the repeated search, want %q again", got, notFound)
+	}
+}
