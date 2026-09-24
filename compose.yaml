@@ -1,4 +1,15 @@
 services:
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://weather:weather@db:5432/weather?sslmode=disable
+    ports:
+      # Published on the loopback interface only; change it to expose the panel to the network.
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:18-alpine
     environment:

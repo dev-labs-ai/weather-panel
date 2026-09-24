@@ -12,12 +12,15 @@ TAILWIND_PLATFORM := $(TAILWIND_OS)-$(TAILWIND_ARCH)
 TAILWIND := bin/tailwindcss-$(TAILWIND_VERSION)-$(TAILWIND_PLATFORM)
 SHA256SUM := $(if $(shell command -v sha256sum),sha256sum,shasum -a 256)
 
-.PHONY: generate css build run test
+.PHONY: generate tailwind css build run test
 
 # Regenerates the committed sqlc and templ code.
 generate:
 	go tool templ generate
 	go tool sqlc generate
+
+# Downloads the Tailwind CLI only; the Dockerfile runs it in its own layer so the download is cached.
+tailwind: $(TAILWIND)
 
 css: $(TAILWIND)
 	$(TAILWIND) --input web/styles/app.css --output web/static/css/app.css --minify

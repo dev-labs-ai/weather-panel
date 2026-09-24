@@ -184,7 +184,7 @@ unit or language switch.
 
 ## Phase 5: Delivery
 
-- [ ] **T16: Package the service with Docker**
+- [x] **T16: Package the service with Docker**
   - Depends on: T10, T14, T15
   - Write a Dockerfile with a builder stage based on `golang:1.27` that fetches the Tailwind binary for
     `TARGETARCH`, builds the CSS, and compiles with `CGO_ENABLED=0`. The runtime stage is

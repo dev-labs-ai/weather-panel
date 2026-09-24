@@ -1,0 +1,5 @@
+# Build outputs and tooling; the image builds its own CSS and binary.
+.git
+.idea
+bin
+web/static/css/app.css
