@@ -7,13 +7,13 @@ const pageTitle = "Clima agora"
 // typed. result fills the result region; nil leaves it empty.
 templ Page(city string, result templ.Component) {
 	@layout(pageTitle) {
-		<main>
-			<h1>Clima agora</h1>
-			<p>Veja a temperatura, a sensação térmica, a condição do tempo, a umidade e o vento de uma cidade neste momento.</p>
+		<main class="mx-auto w-full max-w-xl px-4 py-8 wrap-break-word sm:py-14">
+			<h1 class="text-3xl/tight font-bold tracking-tight sm:text-4xl/tight">Clima agora</h1>
+			<p class="mt-2 text-lg text-muted">Veja a temperatura, a sensação térmica, a condição do tempo, a umidade e o vento de uma cidade neste momento.</p>
 			@searchForm(city)
 			// The result region sits outside the form, so swapping it never touches the input: the user can edit the
 			// city and search again after any outcome.
-			<section id="result" aria-live="polite" aria-atomic="true">
+			<section id="result" class="mt-6" aria-live="polite" aria-atomic="true">
 				if result != nil {
 					@result
 				}
@@ -27,6 +27,7 @@ templ Page(city string, result templ.Component) {
 // the current one finishes. The input stays enabled, so focus is never lost.
 templ searchForm(city string) {
 	<form
+		class="mt-8"
 		action="/weather"
 		method="get"
 		role="search"
@@ -37,19 +38,27 @@ templ searchForm(city string) {
 		hx-sync="this:drop"
 		hx-indicator="#loading"
 	>
-		<label for="city">Cidade</label>
-		<p id="city-hint">Digite o nome de uma cidade, por exemplo: Recife.</p>
-		<input
-			id="city"
-			name="city"
-			type="text"
-			value={ city }
-			maxlength="100"
-			autocomplete="off"
-			enterkeyhint="search"
-			aria-describedby="city-hint city-error"
-		/>
-		<button type="submit">Buscar</button>
-		<p id="loading" class="htmx-indicator" role="status">Buscando o clima…</p>
+		<label for="city" class="block font-semibold">Cidade</label>
+		<p id="city-hint" class="mt-1 text-sm text-muted">Digite o nome de uma cidade, por exemplo: Recife.</p>
+		<div class="mt-2 flex gap-2">
+			<input
+				id="city"
+				name="city"
+				type="text"
+				value={ city }
+				maxlength="100"
+				autocomplete="off"
+				enterkeyhint="search"
+				aria-describedby="city-hint city-error"
+				class={ "min-h-12 min-w-0 flex-1 rounded-md border-2 border-field bg-surface px-3 text-base text-ink", focusRing }
+			/>
+			<button
+				type="submit"
+				class={ "min-h-12 shrink-0 cursor-pointer rounded-md bg-sky px-5 font-semibold text-on-sky hover:brightness-110 disabled:cursor-wait disabled:opacity-60", focusRing }
+			>
+				Buscar
+			</button>
+		</div>
+		<p id="loading" class="htmx-indicator mt-3 text-sm text-muted" role="status">Buscando o clima…</p>
 	</form>
 }

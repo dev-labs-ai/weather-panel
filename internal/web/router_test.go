@@ -25,6 +25,7 @@ func (stubLookup) Lookup(context.Context, string) (weather.Report, error) {
 var testStatic = fstest.MapFS{
 	"js/htmx.min.js": {Data: []byte("var htmx={};")},
 	"css/app.css":    {Data: []byte("body{margin:0}")},
+	"fonts/f.woff2":  {Data: []byte("wOF2")},
 }
 
 func TestResponsesCarrySecurityHeaders(t *testing.T) {
@@ -144,6 +145,7 @@ func TestStaticFiles(t *testing.T) {
 	}{
 		{"/static/js/htmx.min.js?v=0123456789ab", "text/javascript; charset=utf-8", "var htmx={};"},
 		{"/static/css/app.css", "text/css; charset=utf-8", "body{margin:0}"},
+		{"/static/fonts/f.woff2", "font/woff2", "wOF2"},
 	} {
 		t.Run(tt.target, func(t *testing.T) {
 			t.Parallel()

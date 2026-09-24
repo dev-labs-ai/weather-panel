@@ -10,15 +10,21 @@ templ layout(title string) {
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="color-scheme" content="light dark"/>
 			<title>{ title }</title>
 			<meta name="description" content="Consulte o clima atual de qualquer cidade: temperatura, sensação térmica, condição do tempo, umidade e vento."/>
 			// An empty icon keeps the browser from requesting /favicon.ico.
 			<link rel="icon" href="data:,"/>
+			// The stylesheet refers to the font by this exact URL, so the preload is reused instead of fetched twice.
+			<link rel="preload" href="/static/fonts/atkinson-hyperlegible-next-5.3.0-latin.woff2" as="font" type="font/woff2" crossorigin/>
 			<link rel="stylesheet" href={ assets.AssetPath("css/app.css") }/>
 			<script src={ assets.AssetPath("js/htmx.min.js") } defer></script>
 		</head>
-		<body>
+		<body class="min-h-dvh bg-paper font-sans text-base/normal text-ink antialiased">
 			{ children... }
 		</body>
 	</html>
 }
+
+// focusRing is the visible keyboard focus shared by every interactive element.
+const focusRing = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky"

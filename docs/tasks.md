@@ -174,7 +174,7 @@ unit or language switch.
     with status, `Vary`, and content checked. One test shows that an error response replaces a previous result
     entirely.
 
-- [ ] **T15: Style the panel for small screens, contrast, and focus**
+- [x] **T15: Style the panel for small screens, contrast, and focus**
   - Depends on: T13
   - Covers: AC-10, AC-12
   - Use a mobile-first Tailwind layout that works from 360 px wide, with WCAG AA contrast for text and controls,

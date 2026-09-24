@@ -3,41 +3,43 @@ package view
 import "github.com/dev-labs-ai/weather-panel/internal/weather"
 
 // Result shows the conditions at the resolved location. The location comes first because an ambiguous name resolves
-// to the first match, and the user needs to see which place that was. Temperature and condition lead the readings;
-// every value has a text label, so nothing depends on an icon or a color.
+// to the first match, and the user needs to see which place that was. Temperature and condition lead the readings
+// in large type; every value has a text label, so nothing depends on an icon or a color.
 templ Result(r weather.Report) {
-	<article>
-		<h2>
+	<article class="rounded-xl border border-line bg-surface p-5 sm:p-6">
+		<h2 class="text-lg/snug font-semibold">
 			<span>Agora em</span>
 			{ formatLocation(r.Location) }
 		</h2>
-		<dl>
+		<dl class="mt-4 flex flex-wrap items-end gap-x-8 gap-y-3">
 			<div>
-				<dt>Temperatura</dt>
-				<dd>{ formatTemperature(r.Conditions.TemperatureC) }</dd>
+				<dt class="text-sm text-muted">Temperatura</dt>
+				<dd class="text-[clamp(3rem,18vw,6rem)] leading-none font-bold tracking-tight tabular-nums">
+					{ formatTemperature(r.Conditions.TemperatureC) }
+				</dd>
 			</div>
-			<div>
-				<dt>Condição</dt>
-				<dd>{ weather.ConditionDescription(r.Conditions.WeatherCode) }</dd>
+			<div class="pb-1">
+				<dt class="text-sm text-muted">Condição</dt>
+				<dd class="text-2xl/tight font-semibold">{ weather.ConditionDescription(r.Conditions.WeatherCode) }</dd>
 			</div>
 		</dl>
-		<dl>
+		<dl class="mt-6 grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-3">
 			<div>
-				<dt>Sensação térmica</dt>
-				<dd>{ formatTemperature(r.Conditions.ApparentTemperatureC) }</dd>
+				<dt class="text-sm text-muted">Sensação térmica</dt>
+				<dd class="mt-1 text-xl font-semibold tabular-nums">{ formatTemperature(r.Conditions.ApparentTemperatureC) }</dd>
 			</div>
 			<div>
-				<dt>Umidade</dt>
-				<dd>{ formatHumidity(r.Conditions.RelativeHumidityPct) }</dd>
+				<dt class="text-sm text-muted">Umidade</dt>
+				<dd class="mt-1 text-xl font-semibold tabular-nums">{ formatHumidity(r.Conditions.RelativeHumidityPct) }</dd>
 			</div>
 			<div>
-				<dt>Vento</dt>
-				<dd>{ formatWindSpeed(r.Conditions.WindSpeedKmh) }</dd>
+				<dt class="text-sm text-muted">Vento</dt>
+				<dd class="mt-1 text-xl font-semibold tabular-nums">{ formatWindSpeed(r.Conditions.WindSpeedKmh) }</dd>
 			</div>
 		</dl>
 		// The CC BY 4.0 license requires the attribution next to the data.
-		<p>
-			Dados meteorológicos por <a href="https://open-meteo.com/">Open-Meteo.com</a>
+		<p class="mt-6 text-sm text-muted">
+			Dados meteorológicos por <a href="https://open-meteo.com/" class={ "rounded-sm text-sky underline underline-offset-2 hover:decoration-2", focusRing }>Open-Meteo.com</a>
 		</p>
 	</article>
 }
@@ -46,14 +48,14 @@ templ Result(r weather.Report) {
 // input's aria-describedby points at, so the message is also read as the input's description.
 templ ValidationMessage(message string) {
 	@messageBox("Confira o nome da cidade") {
-		<p id="city-error">{ message }</p>
+		<p id="city-error" class="mt-1">{ message }</p>
 	}
 }
 
 // NotFoundMessage says that no place matches the name and invites a new search.
 templ NotFoundMessage() {
 	@messageBox("Cidade não encontrada") {
-		<p>Não encontramos nenhuma cidade com esse nome. Confira a grafia ou tente uma cidade próxima e busque de novo.</p>
+		<p class="mt-1">Não encontramos nenhuma cidade com esse nome. Confira a grafia ou tente uma cidade próxima e busque de novo.</p>
 	}
 }
 
@@ -61,14 +63,15 @@ templ NotFoundMessage() {
 // a retry.
 templ UnavailableMessage() {
 	@messageBox("Clima indisponível no momento") {
-		<p>Não conseguimos obter os dados meteorológicos agora. Aguarde alguns instantes e busque de novo.</p>
+		<p class="mt-1">Não conseguimos obter os dados meteorológicos agora. Aguarde alguns instantes e busque de novo.</p>
 	}
 }
 
 // messageBox gives every message the same shape: a heading that says what went wrong and text that says what to do.
+// The colored edge only decorates; the heading carries the meaning.
 templ messageBox(title string) {
-	<div>
-		<h2>{ title }</h2>
+	<div class="rounded-xl border border-l-4 border-line border-l-notice bg-surface p-5">
+		<h2 class="text-lg/snug font-semibold">{ title }</h2>
 		{ children... }
 	</div>
 }

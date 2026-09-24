@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"path"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -29,6 +30,9 @@ func healthz(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte("ok\n"))
 }
 
+// staticTypes fills gaps in Go's built-in MIME table, which the runtime image has no /etc/mime.types to extend.
+var staticTypes = map[string]string{".woff2": "font/woff2"}
+
 // staticFiles serves the files in fsys with a one-year cache lifetime. Pages reference them through
 // web.AssetPath, whose content version changes the URL whenever a file changes. Directories are not listed, and a
 // missing file gets a plain 404 that browsers do not keep.
@@ -40,6 +44,9 @@ func staticFiles(fsys fs.FS) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		if ctype, ok := staticTypes[path.Ext(name)]; ok {
+			w.Header().Set("Content-Type", ctype)
+		}
 		http.ServeFileFS(w, r, fsys, name)
 	}
 }

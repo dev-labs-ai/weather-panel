@@ -2,3 +2,62 @@
    only from the templ components. */
 @import "tailwindcss" source(none);
 @source "../../internal/view";
+
+/* Atkinson Hyperlegible Next, from @fontsource-variable/atkinson-hyperlegible-next 5.3.0 (SIL OFL 1.1, see
+   /static/fonts/OFL.txt). It was drawn for low-vision readers, who are part of the audience. Static files are cached
+   as immutable, so the file names carry the package version: a new version must get new names. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("/static/fonts/atkinson-hyperlegible-next-5.3.0-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("/static/fonts/atkinson-hyperlegible-next-5.3.0-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Every text and control pair meets WCAG AA in both schemes: text at least 4.5:1, the input border and the focus
+   outline at least 3:1 against what surrounds them. */
+@theme {
+  --font-sans: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f3f6f9; /* page background */
+  --color-surface: #ffffff; /* result and message background */
+  --color-ink: #0f2233; /* text */
+  --color-muted: #4a5e70; /* secondary text */
+  --color-sky: #0a5bb5; /* links, the button, focus outlines */
+  --color-on-sky: #ffffff; /* text on the button */
+  --color-field: #6a7f92; /* input border */
+  --color-line: #d5dee6; /* dividers, decorative only */
+  --color-notice: #b3261e; /* message accent, decorative only */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #0b1620;
+    --color-surface: #13222f;
+    --color-ink: #e6edf3;
+    --color-muted: #a7b7c6;
+    --color-sky: #86bef5;
+    --color-on-sky: #0b1620;
+    --color-field: #7f95a9;
+    --color-line: #2a3c4c;
+    --color-notice: #f2b8b5;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+}
